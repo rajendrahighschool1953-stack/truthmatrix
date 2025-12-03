@@ -1,7 +1,7 @@
 // app/api/detect-deepfake/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { Buffer } from "buffer";
-import { generateText } from "ai";
+import * as AI from "ai";
 import { google } from "@ai-sdk/google";
 
 /**
@@ -82,7 +82,7 @@ Look for:
 `;
 
     // Call the AI SDK consistently. Keep temperature low for deterministic analysis.
-    const result = await generateText({
+    const result = await (AI as any).generateText({
       model: google("gemini-2.5-flash"),
       // send the prompt as a single user message
       messages: [{ role: "user", content: [{ type: "text", text: analysisPrompt }] }],

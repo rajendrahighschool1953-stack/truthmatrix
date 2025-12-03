@@ -1,7 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { generateText } from "ai";
+import { google } from "@ai-sdk/google";
 import { NextRequest, NextResponse } from "next/server";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,14 +13,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
       return NextResponse.json(
-        { error: "Gemini API key not configured" },
+        { error: "Google Generative AI API key not configured" },
         { status: 500 }
       );
     }
-
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
     const analysisPrompt = `You are an expert fact-checker and misinformation detector. Analyze the following text/news article and provide a detailed assessment.
 
@@ -52,8 +49,14 @@ Analyze for:
 7. Known false narratives
 8. Contradictions with established facts`;
 
-    const result = await model.generateContent(analysisPrompt);
-    const responseText = result.response.text();
+    const result = await generateText({
+      model: google("gemini-2.5-flash"),
+      prompt: analysisPrompt,
+      temperature: 0.7,
+      maxTokens: 1024,
+    });
+
+    const responseText = result.text;
 
     // Extract JSON from response
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);

@@ -1,13 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { generateText } from "ai";
+import { google } from "@ai-sdk/google";
 import { NextRequest, NextResponse } from "next/server";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-
-async function imageToBase64(url: string): Promise<string> {
-  const response = await fetch(url);
-  const buffer = await response.arrayBuffer();
-  return Buffer.from(buffer).toString("base64");
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,9 +15,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
       return NextResponse.json(
-        { error: "Gemini API key not configured" },
+        { error: "Google Generative AI API key not configured" },
         { status: 500 }
       );
     }
@@ -32,15 +25,6 @@ export async function POST(request: NextRequest) {
     // Convert file to base64
     const bytes = await file.arrayBuffer();
     const base64Data = Buffer.from(bytes).toString("base64");
-
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-
-    const imagePart = {
-      inlineData: {
-        data: base64Data,
-        mimeType: file.type || "image/jpeg",
-      },
-    };
 
     const analysisPrompt = `You are an expert in detecting deepfakes, AI-generated images, and manipulated media. Analyze this image for signs of manipulation, AI generation, or deepfake indicators.
 
@@ -81,8 +65,25 @@ Look for:
 11. Background coherence
 12. Reflection anomalies`;
 
-    const result = await model.generateContent([analysisPrompt, imagePart]);
-    const responseText = result.response.text();
+    const result = await generateText({
+      model: google("gemini-2.5-flash"),
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: analysisPrompt },
+            {
+              type: "image",
+              image: Buffer.from(base64Data, "base64"),
+            },
+          ],
+        },
+      ],
+      temperature: 0.7,
+      maxTokens: 1024,
+    });
+
+    const responseText = result.text;
 
     // Extract JSON from response
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);

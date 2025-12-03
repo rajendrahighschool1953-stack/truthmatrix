@@ -58,7 +58,6 @@ Analyze for:
       model: google("gemini-2.5-flash"),
       messages: [{ role: "user", content: [{ type: "text", text: analysisPrompt }] }],
       temperature: 0.2,
-      maxTokens: 1024,
     });
 
     const responseText = (result as any).text ?? "";

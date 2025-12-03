@@ -87,7 +87,6 @@ Look for:
       // send the prompt as a single user message
       messages: [{ role: "user", content: [{ type: "text", text: analysisPrompt }] }],
       temperature: 0.2,
-      maxTokens: 1024,
     });
 
     // result.text is expected; be defensive
